@@ -1,12 +1,19 @@
 use std::env;
-use std::fs;
+use std::process;
+
+use minigrep::Config;
 
 fn main() {
     let command:Vec<String> = env::args().collect();
 
-    let exp:&String = &command[1];
-    let file_name : &String = &command[2];
+    let config = Config::new(&command).unwrap_or_else(|err| {
+        println!("Problem Parsing Arguments : {} ",err);
+        process::exit(1);
+    });
 
-    println!("Searching {} in File {}",exp,file_name);
-
+    if let Err(e) = config.run() {
+        println!("Application Error : {} ",e);
+        process::exit(1);
+    }
 }
+
