@@ -9,44 +9,52 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &'static str>{
+    pub fn new(mut args: env::Args) -> Result<Config, &'static str>{
         if args.len() < 3 {
             return Err("Not Enough Arguments. ");
-        }else if args.len() > 3{
-            let var:u8;
-            let arg_3:&str = &args[3];
-            match arg_3 {
-                "-cs" => {
-                    env::set_var("CASE-SENSETIVE", "true");
-                    var = 1;
-                },
-                "-ci" =>{
-                    env::set_var("CASE-SENSETIVE","false");
-                    var = 2;
-                } 
-                "--help" =>{
-                    var = 3;
-                },
-
-                _ => {
-                    return Err("Incorrect Argument. ");
-                }
-            }
-            return Ok(
-                Config {
-                    expression : args[1].clone(),
-                    file_name : args[2].clone(),
-                    env_var : var,
-                }
-            );
         }
-        Ok(
-            Config {
-                expression : args[1].clone(),
-                file_name : args[2].clone(),
-                env_var : 0,
+        args.next();
+        let exp = match args.next() {
+            Some(x) => x,
+            None => return Err("Didn't Get a query Expression Parameter."),
+        };
+        let f_n = match args.next(){
+            Some(f) => f,
+            None => return Err("Didn't Get a File Name Parameter."),
+        };
+        let var:u8;
+        let arg_3:&str = &(match args.next(){
+            Some(v) => v,
+            None => "0".to_string(),
+        });
+        match arg_3 {
+            "-cs" => {
+                env::set_var("CASE-SENSETIVE", "true");
+                var = 1;
+            },
+            "-ci" =>{
+                env::set_var("CASE-SENSETIVE","false");
+                var = 2;
+            } 
+            "--help" =>{
+                var = 3;
+            },
+
+            "0" => {
+                var = 0
+            },
+
+            _ => {
+                return Err("Incorrect Argument. ");
             }
-        )
+        }
+        return Ok(
+            Config {
+                expression : exp,
+                file_name : f_n,
+                env_var : var,
+            }
+        );
         
     }
 
@@ -60,28 +68,22 @@ impl Config {
     }
 
     fn search<'a>(&self,contents:&'a str) -> Vec<&'a str>{
-        let mut res:Vec<&str> = Vec::new();
-
-        for mut line in contents.lines(){
-            if line.contains(&self.expression){
-                line = line.trim();
-                res.push(line);
-            }
-        }
-
-        res
+        contents
+            .lines()
+            .filter(|line| line.contains(&self.expression))
+            .collect()
     }
 
     fn case_insensitive<'a>(& self,contents:&'a str) -> Vec<&'a str>{
-        let mut res:Vec<&str> = Vec::new();
-
-        for mut line in contents.lines(){
-            if line.to_lowercase().contains(&self.expression.to_lowercase()){
-                line = line.trim();
-                res.push(line);
-            }
-        }
-        res
+        contents
+            .lines()
+            .filter(
+                |line|
+                    line
+                        .to_lowercase()
+                        .contains(&self.expression.to_lowercase())
+                )
+            .collect()
     }
 
     fn run_without_env(&self) -> Result<(), Box<dyn Error>>{
