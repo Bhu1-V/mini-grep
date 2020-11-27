@@ -7,12 +7,12 @@ fn main() {
     let command:Vec<String> = env::args().collect();
 
     let config = Config::new(&command).unwrap_or_else(|err| {
-        println!("Problem Parsing Arguments : {} ",err);
+        eprintln!("Problem Parsing Arguments : {} ",err);
         process::exit(1);
     });
 
     if let Err(e) = config.run() {
-        println!("Application Error : {} ",e);
+        eprintln!("Application Error : {} ",e);
         process::exit(1);
     }
 }
