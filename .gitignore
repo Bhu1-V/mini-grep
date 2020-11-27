@@ -2,4 +2,4 @@
 *.lock
 *.exe
 *.pdb
-Output.txt
+*.txt
